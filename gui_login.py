@@ -1,7 +1,7 @@
 '''
 gui_login.py
-Gui for the login page the user sees when opening the application. This is the first thing they see, and it will
-handle the login process and redirect to the main application if successful.
+Gui for the login page the user sees when opening the application. This is the first thing they see, 
+and it will handle the login process and redirect to the main application if successful.
 '''
 import tkinter as tk
 from tkinter import ttk
@@ -20,7 +20,7 @@ class FlatButton(tk.Frame):
     def __init__(self, parent, text, bg_color, fg_color, command, width=None):
         super().__init__(parent, bg=bg_color, cursor="hand2")
         self.command = command
-        self.lbl = tk.label(self, text=text, bg=bg_color, fg=fg_color, font=("Calibri", 12, "bold"))
+        self.lbl = tk.Label(self, text=text, bg=bg_color, fg=fg_color, font=("Calibri", 12, "bold"))
         if width:
             self.lbl.config(width=width)
         self.lbl.pack(padx=10, pady=8)
@@ -34,7 +34,7 @@ class LoginWindow:
     def __init__(self, root_window, success_function):
         self.window = root_window
         self.success_function = success_function
-        self.window.tittle("HPE Inventory Management System")
+        self.window.title("HPE Inventory Management System")
         self.window.geometry("500x500") # Scaled up so nothing chops off
         self.window.configure(bg=White)
         self.build_ui()
@@ -42,7 +42,7 @@ class LoginWindow:
     def build_ui(self):
         header_frame = tk.Frame(self.window, bg=Dark_Blue, pady=25)
         header_frame.pack(fill="x")
-        tk.Label(header_frame, text="Braemar College", bg=Dark_Blue, fg=White, font=("Calibri", 12)).pack()
+        tk.Label(header_frame, text="Random School", bg=Dark_Blue, fg=White, font=("Calibri", 12)).pack()
         tk.Label(header_frame, text="HPE Equipment Inventory", bg=Dark_Blue, fg=Light_Blue, font=("Calibri", 12)).pack()
 
         # The Card Container
@@ -51,16 +51,16 @@ class LoginWindow:
 
         tk.Label(card, text="Sign In", bg=Card_Grey, fg=Dark_Blue, font=("Calibri", 16, "bold")).pack(anchor="center", pady=(0, 15))
 
-        tk.Label(card, text="Username", bg=Card_Grey, font=("Calibri", 11)).pack(anchor="w")
+        tk.Label(card, text="Username", bg=Card_Grey, font=("Calibri", 11, "bold")).pack(anchor="w")
         self.username_input = tk.StringVar()
-        ttk.Entry(card, textvariable=self.username_input, font=("Calibri", 11)).pack(anchor="w")
+        ttk.Entry(card, textvariable=self.username_input, font=("Calibri", 12), width=35).pack(anchor="w")
 
-        tk.Label(card, text="Password", bg=Card_Grey, font=("Calibri", 11)).pack(anchor="w")
+        tk.Label(card, text="Password", bg=Card_Grey, font=("Calibri", 11, "bold")).pack(anchor="w")
         self.password_input = tk.StringVar()        
-        ttk.Entry(card, textvariable=self.password_input, show=".", font =("Calibri", 12), width=35).pack(pady=(0, 15))
+        ttk.Entry(card, textvariable=self.password_input, show="*", font =("Calibri", 12), width=35).pack(pady=(0, 15))
 
         self.error_var = tk.StringVar()
-        self.error_lbl = tk.label(card, textvariable=self.error_var, bg=Error_background, fg=Error_text, font=("Calibri", 10, "bold"), padx=10, pady=5)
+        self.error_lbl = tk.Label(card, textvariable=self.error_var, bg=Error_background, fg=Error_text, font=("Calibri", 10, "bold"), padx=10, pady=5)
 
         FlatButton(card, "Sign In", Accent_Blue, White, self.attempt_login).pack(fill="x", pady=(15,0))
 

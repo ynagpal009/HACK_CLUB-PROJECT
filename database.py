@@ -87,7 +87,7 @@ def intialise_database():
     """)
 
     cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchnon()[0] == 0:
+    if cursor.fetchone()[0] == 0:
             today_date = str(date.today())
             cursor.execute("""
                 INSERT INTO users (username, password_hash, role, full_name, date_created)
