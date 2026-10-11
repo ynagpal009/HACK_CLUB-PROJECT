@@ -116,11 +116,13 @@ class User:
         cursor.execute("SELECT * FROM users ORDER BY is_active DESC, username ASC")
         rows = cursor.fetchall()
         connection.close()
-        
+
         users = []
         for row in rows:
             users.append(User(row))
         return users
+    
+  
 
      
 
