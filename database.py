@@ -12,6 +12,7 @@ from datetime import date
 
 db_path = os.path.join(os.path.dirname(__file__), "inventory.db")
 
+
 def get_connection():
     # row factory lets us do row["item_name"] instead of row[1], row[2] etc
     connection = sqlite3.connect(db_path)
@@ -20,13 +21,13 @@ def get_connection():
     return connection
 
 
-def hash_password(password, salt=NONE):
+def hash_password(password, salt=None):
     # adds a random salt so the same password doesn't always hash to the
     # same string, found this out after finding out plain sha256 alone
     #isn't great practice for storing passwords
-    if salt is NONE:
+    if salt is None:
         salt = secrets.token_hex(16)
-    digest = hashlib.sha256(salt + password).encode()).hexdigest()
+    digest = hashlib.sha256((salt + password).encode()).hexdigest()
     return f"{salt}${digest}"
 
 
