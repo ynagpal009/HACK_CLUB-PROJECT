@@ -341,4 +341,131 @@ class Equipment:
         }
 
 
-  
+class BorrowRecord:
+    def __init__(self, row=None):
+        if row is not None:
+            self.borrow_id = row["borrow_id"]
+            self.item_id = row["item_id"]
+            self.borrower_name = row["borrower_name"]
+            self.qty_borrowed = row["qty_borrowed"]
+            self.borrow_date = row["borrow_date"]
+            self.expected_return = row["expected_return"]
+            self.return_date = row["return_date"]
+            self.status = row["self_status"]
+            self.recorded_by = row["recorded_by"]
+        else:
+            self.borrow_id = None
+            self.item_id = None
+            self.borrower_name = ""
+            self.qty_borrowed = 0 
+            self.borrow_date = str(date.today())
+            self.expected_return = ""
+            self.return_date = None
+            self.status = "Borrowed"
+            self.recorded_by = ""
+
+    def save(self):
+        if self.borrower_name.strip() == "":
+            return False, "Borrower name cannot be empty."
+        if len(self.borrower_name.strip()) > 60:
+            return False, "Borrower name is too long."
+        item = Equipment().get_by_id(self.item_id)
+        if item is None:
+            return False, "Item not found."
+
+        try:
+            self.qty_borrowed = int(self.qty_borrowed)
+            if self.qty_borrowed < 1:
+                return False, "Quantity must be at least 1."
+        except ValueError:
+            return False, "Quantiy must be a number."
+
+        if self.qty_borrowed > item.available_qty:
+            return False, "Cannot exceed available stock."
+
+        connection = get_connection() 
+        cursor = connection.cursor()
+        cursor.execute("""
+            INSERT INTO borrow_records (item_id, borrower_name, qty_borrowed, borrow_date, expected_return, status, recorded by)
+            VALUES(?, ?, ?, ?, ?, ?, ?)
+        """, (self.item_id, self.borrower_name, self.qty_borrowed, self.borrow_date, self.expected_return, "Borrowed", self.recorded_by))
+        self.borrow_id = cursor.lastrowid
+        connection.commit()
+        connection.close()
+        item.update_availiability("borrow", self.qty_borrowed)
+        return True, "Saved" 
+
+    def complete_return(self, return_date):
+        connection = get_connection()
+        connection.execute("UPDATE borrow_records SET return_date=?, status='Returned' WHERE borrow_id=?", (return_date, self.borrow_id))
+        connection.commit()
+        connection.close()
+        self.return_date = return_date
+        self.status - 'Returned'
+        Equipment().get_by_id(self.item_id).update_availability("return", self.qty_borrowed)
+        return True, "Returned"
+
+    def get_active_for_item(self, item_id):
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM borrow_records WHERE item_id=? AND status= 'Borrowed'", (item_id))
+        rows = cursor.fetchall()
+        connection.close()
+
+        records = []
+        for row in rows:
+            records.append(BorrowRecord(row))
+        return records
+
+    def get_all_active(self):
+        # everything currently out on loan, across every item, not just 
+        # one - joins with equipment so we get the item name too
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT b.*, e.item_name AS item_name
+            FROM borrow_records b
+            JOIN equipment e ON e.item_id = b.item_id
+            WHERE b.status = 'Borrowed'
+            ORDER BY b.borrow_date DESC, b.borrow_id DESC
+            """)
+        rows = cursor.fetchall()
+        connection.close()
+
+        records = []
+        for row in rows:
+            rec = BorrowRecord(row)
+            rec.item_name = row["item_name"]
+            records.append(rec)
+        return records
+
+    def get_history(self, search_text=""):
+        # same idea as get_all_active but includes returned items too
+        connection = get_connection()
+        cursor = connection.cursor()
+        text = search_text.strip()
+        if text != "":
+            cursor.execute("""
+                SELECT b.*, e.item_name AS item_name
+                FROM borrow_records b
+                JOIN equipment e ON e.item_id = b.item_id
+                WHERE b.borrower_name LIKE ? OR e.item_name LIKE ?
+                ORDER BY b.borrow_date DESC, b.borrow_id DESC
+            """, (f"%{text}%", f"%{text}%"))
+        else:
+            cursor.execute("""
+                SELECT b.*, e.item_name AS item_name
+                FROM borrow_records b
+                JOIN equipment e ON e.item_id = b.item_id
+                ORDER BY b.borrow_date DESC, b.borrow_id DESC
+            """)
+        rows = cursor.fetchall()
+        connection.close()
+
+        records = []
+        for row in rows:
+            rec = BorrowRecord(row)
+            rec.item_name = row["item_name"]
+            records.append(rec)
+        return records
+   
