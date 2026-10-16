@@ -90,7 +90,7 @@ class Dashboard:
             FlatButton(toolbar, "+ Add Item", "#2E75B6", White, self.add_item).pack(side="left", padx=5)
             FlatButton(toolbar, "Edit Item", "#E67E22", White, self.edit_item).pack(side="left", padx=5)
             FlatButton(toolbar, "Delete", "#E74C3c", White, self.delete_item).pack(side="left", padx=5)
-            tk.Frame(toolbar, bg="CCCCCC", width=2).pack(side="left", fill="y", padx=10)
+            tk.Frame(toolbar, bg="#CCCCCC", width=2).pack(side="left", fill="y", padx=10)
 
         FlatButton(toolbar, "Borrow", "#27AE60", White, self.borrow_item).pack(side="left", padx=5)
         FlatButton(toolbar, "Return", "#27AE60", White, self.return_item).pack(side="left", padx=5)
@@ -102,13 +102,13 @@ class Dashboard:
         self.search_val = tk.StringVar()
         search_entry = tk.Entry(toolbar, textvariable=self.search_val, width=25, font=("Calibri", 11))
         search_entry.pack(side="right", padx=10, ipady=4)
-        search_entry.binf("<Return>", self.handle_search_enter)
-        FlatButton(toolbar, "Search", "#FFFFFF", "#000000", self.refrsh_table).pack(side="right")
+        search_entry.bind("<Return>", self.handle_search_enter)
+        FlatButton(toolbar, "Search", "#FFFFFF", "#000000", self.refresh_table).pack(side="right")
         tk.Label(toolbar, text="Search (name / category / ID):", bg=Light_Grey, font=("Calibri", 11)).pack(side="right")
 
         # 3. Table Area
-        table_frame = tk.frame(self.window, bg=White)
-        table_frame = tk.frame(fill="both", expand=True)
+        table_frame = tk.Frame(self.window, bg=White)
+        table_frame.pack(fill="both", expand=True)
 
         scroll = ttk.Scrollbar(table_frame, orient="vertical")
         scroll.pack(side="right", fill="y")
@@ -238,7 +238,7 @@ class Dashboard:
                 direction_text = "asc"
             else:
                 direction_text = "desc"
-            self.status_msg.set(f"{len(items)} items | {low_count} low sotck | Sort: {self.sort_col} ({direction_text})")
+            self.status_msg.set(f"{len(items)} items | {low_count} low stock | Sort: {self.sort_col} ({direction_text})")
 
     def get_selected(self):
         sel = self.tree.focus()
@@ -269,8 +269,8 @@ class Dashboard:
         if item:
             if item.available_qty <= 0:
                 messagebox.showerror("Error", "No stock available.")
-        else:
-            BorrowForm(self.window, item, self.refresh_table, self.user.username)
+            else:
+                BorrowForm(self.window, item, self.refresh_table, self.user.username)
 
     def return_item(self):
         item = self.get_selected()

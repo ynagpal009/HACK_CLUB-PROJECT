@@ -178,7 +178,7 @@ class Equipment:
         if self.condition_status == "":
             return False, "Please select a conditon."
         try:
-            self.total_qty = int(self.total.qty)
+            self.total_qty = int(self.total_qty)
             if self.total_qty < 1:
                 return False, "Total quantity must be at least 1."
             if self.total_qty > 500:
@@ -202,7 +202,7 @@ class Equipment:
 
         connection = get_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT item_id FROm equipmnent WHERE item_name=?", (self.item_name,))
+        cursor.execute("SELECT item_id FROM equipment WHERE item_name=?", (self.item_name,))
         dup = cursor.fetchone()
 
         if dup is not None and dup["item_id"] != self.item_id:
@@ -228,9 +228,9 @@ class Equipment:
         else:
             self.available_qty = self.total_qty
             cursor.execute("""
-                INSERT INTO equipment (self.item_name, self.category, self.total_qty, self.available_qty, self.location, self.condition_status, self.notes, self.date_added))
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (self.item_name, self.category, self.total_qty, self.available_qty, self.location, self.condition_status, self.low_stock_threshold, self.notes, self.date_added))
+                INSERT INTO equipment (item_name, category, total_qty, available_qty, location, condition_status, low_stock_threshold, notes, date_added)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (self.item_name, self.category, self.total_qty, self.available_qty, self.location, self.condition_status, self.low_stock_threshold, self.notes, self.date_added))
             self.item_id = cursor.lastrowid
             connection.commit()
             connection.close()
@@ -289,8 +289,8 @@ class Equipment:
             )
     
         else:
-            cursor.execute(f"SELECT * FROM quipment ORDER BY {sort_col} {direction}")
-        rows = cursor.fetchll()
+            cursor.execute(f"SELECT * FROM equipment ORDER BY {sort_col} {direction}")
+        rows = cursor.fetchall()
         connection.close()
 
         items = []
@@ -386,13 +386,13 @@ class BorrowRecord:
         connection = get_connection() 
         cursor = connection.cursor()
         cursor.execute("""
-            INSERT INTO borrow_records (item_id, borrower_name, qty_borrowed, borrow_date, expected_return, status, recorded by)
+            INSERT INTO borrow_records (item_id, borrower_name, qty_borrowed, borrow_date, expected_return, status, recorded_by)
             VALUES(?, ?, ?, ?, ?, ?, ?)
         """, (self.item_id, self.borrower_name, self.qty_borrowed, self.borrow_date, self.expected_return, "Borrowed", self.recorded_by))
         self.borrow_id = cursor.lastrowid
         connection.commit()
         connection.close()
-        item.update_availiability("borrow", self.qty_borrowed)
+        item.update_availability("borrow", self.qty_borrowed)
         return True, "Saved" 
 
     def complete_return(self, return_date):
