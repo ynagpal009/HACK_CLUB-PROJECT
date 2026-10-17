@@ -190,7 +190,144 @@ class BorrowForm:
         else:
             self.err_var.set(msg)
 
-class ReturnForm: pass
+
+class ReturnForm: 
+    def __init__(self, parent, item, refresh_fn):
+        self.item = item
+        self.refresh_fn = refresh_fn
+        self.win = tk.Toplevel(parent)
+        self.win.geometry("560x440")
+        self.win.configure(bg=BG_Blue)
+        tk.Label(self.win, text="Record Return", bg=Dark_Blue, fg=White, font=("Calibri", 14, "bold"), anchor="w", padx=20, pady=10).pack(fill="x")
+
+        content = tk.Frame(self.win, bg=White, padx=20, pady=20)
+        content.pack(fill="both", expand=True, padx=20, pady=20)
+
+        self.records = BorrowRecord().get_active_for_item(item.item_id)
+        self.tree = ttk.Treeview(content, columns=("id", "name", "qty", "due"), show="headings", height=5)
+        self.tree.heading("id", text="ID")
+        self.tree.column("id", width=40)
+        self.tree.heading("name", text="Borrower")
+        self.tree.column("name", width=180)        
+        self.tree.heading("qty", text="Qty")
+        self.tree.column("qty", width=60)
+        self.tree.heading("due", text="Due Back")
+        self.tree.column("due", width=100)
+        self.tree.pack(pady=10, fil="x")
+        for r in self.records:
+            if r.expected_return:
+                due_text = r.expected_return
+            else:
+                due_text = "-"
+            self.tree.insert("", "end", iid=r.borrow_id, values=(r.borrow_id, r.borrower_name, r.qty_borrowed, due_text))
+
+        self.err_var = tk.StringVar()
+        tk.Label(content, textvariable=self.err_var, fg=Red, bg=White, font=("Calibri", 10, "bold")).pack()
+
+        btn_box = tk.Frame(content, bg=White)
+        btn_box.pack(pady=10)
+        Flatbutton(btn_box, "Confirm Return", Green, White, self.save).pack(side="left", padx=5)
+        Flatbutton(btn_box, "Cancel", Grey, "#000000", self.win.destroy).pack(side="left", padx=5)
+
+    def save(self):
+        sel = self.tree.focus()
+        if not sel:
+            self.err_var.set("Please select a record.")
+            return
+
+        rec = None
+        for r in self.records:
+            if r.borrow_id == int(sel):
+                rec = r
+                break
+
+        if rec:
+            rec.complete_return(str(date.today()))
+            self.win.destroy()
+            self.refresh_fn()
+
+
+class UserForm:
+    # admin only - lets you make a new staff/admin login or edit one that
+    # already exists (existing__user is None means we're making a new one)
+
+    def __init__(self, parent, refresh_fn, existing_user=None):
+        self.refresh_fn = refresh_fn
+        if existing_user is not None:
+            self.user = existing_user
+        else:
+            self.user = User()
+        self.is_new = existing_user is None
+
+        self.win = tk.Toplevel(parent)
+        self.win.title("User Account Form")
+        self.win.geometry("480x480")
+        self.win.configure(bg=BG_Blue)
+        self.win.grab_set()
+
+        if existing_user:
+            title = "Edit User Account"
+        else:
+            title = "Add New User Account"
+        tk.Label(self.win, text=title, bg=Dark_Blue, fg=White, font=("Calibri", 14, "bold"), anchor="w", padx=20, pady=10).pack(fill="x")
+
+        panel = tk.Frame(self.win, bg=White, padx=30, pady=20)
+        panel.pack(fill="both", expand=True, padx=20, pady=20)
+
+        self.username_var = tk.StringVar(value=self.user.username)
+        self.fullname_var = tk.StringVar(value=self.user.full_name)
+        self.role_var = tk.StringVar(value=self.user.role)
+        self.password_var = tk.StringVar()
+        self.active_var = tk.BooleanVar(value=bool(self.user.is_active))
+        self.error_var = tk.StringVar()
+
+        tk.Label(panel, text="Username *", bg=White, font=("Calibri", 10, "bold")).grid(row=0, column=0, sticky="w", pady=10)
+        ttk.Entry(panel, textvariable=self.username_var, width=30).grid(row=0, column=1, sticky="w")
+
+        tk.Label(panel, text="Full Name *", bg=White, font=("Calibri", 10, "bold")).grid(row=1, column=0, sticky="w", pady=10)
+        ttk.Entry(panel, textvariable=self.fullname_var, width=30).grid(row=1, column=1, sticky="w")
+
+        tk.Label(panel, text="Role *", bg=White, font=("Calibri", 10, "bold")).grid(row=2, column=0, sticky="w", pady=10)
+        tk.Combobox(panel, textvariable=self.role_var, values=["Admin", "Staff"], state="readonly", width=15).grid(row=2, column=1, sticky="w")
+
+        if self.is_new:
+            pw_label = "Password *"
+        else:
+            pw_label = "New Password (leave blank to keep current)"
+        tk.Label(panel, tex=pw_label, bg=White, font=("Calibri", 10, "bold")).grid(row=3, column=0, sticky="w", pady=10)
+        ttk.Entry(panel, textvariable=self.password_var, show="\u2022", width=30).grid(row=3, column=1, sticky="w")
+
+        tk.Checkbutton(panel, text="Account Active", variable=self.active_var, bg=White, font=("Calibri", 10)).grid(row=4, column=0, columnspan=2, sticky="w", pady=10)
+
+        tk.Label(panel, textvariable=self.error_var, fg=Red, bg=White, font=("Calibri", 10, "bold")).grid(row=5, column=0, columnspan=2)
+
+        btn_box = tk.Frame(panel, bg=White)
+        btn_box.grid(row=6, column=0, columnspan=2, pady=15)
+        Flatbutton(btn_box, "Save User", Green, White, self.save).pack(side="left", padx=5)
+        Flatbutton(btn_box, "Cancel", Grey, "#000000", self.win.destroy).pack(side="left", padx=5)
+
+    def save(self):
+        self.user.username = self.username_var.get().strip()
+        self.user.full_name = self.fullname_var.get().strip()
+        self.user.role = self.role_var.get()
+
+        if self.active_var.get():
+            self.user.is_active = 1
+        else:
+            self.user.is_active = 0 
+
+        new_password = self.password_var.get().strip()
+        if new_password == "":
+            new_password = None
+
+        ok, msg = self.user.save(new_password=new_password)
+        if ok:
+            self.win.destroy()
+            self.refresh_fn()
+        else:
+            self.error_var.set(msg)
+
+
 class AccountsWindow: pass
 class ReportWindow: pass
 class BorrowLogWindow: pass

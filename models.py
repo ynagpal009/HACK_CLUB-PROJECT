@@ -138,7 +138,7 @@ class Equipment:
             self.total_qty = row["total_qty"]
             self.available_qty = row["available_qty"]
             self.location = row["location"]
-            self.conditon_status = row["condition_status"]
+            self.condition_status = row["condition_status"]
             self.low_stock_threshold = row["low_stock_threshold"]
             if row["notes"]:
                 self.notes = row["notes"]
@@ -351,7 +351,7 @@ class BorrowRecord:
             self.borrow_date = row["borrow_date"]
             self.expected_return = row["expected_return"]
             self.return_date = row["return_date"]
-            self.status = row["self_status"]
+            self.status = row["status"]
             self.recorded_by = row["recorded_by"]
         else:
             self.borrow_id = None
@@ -401,14 +401,14 @@ class BorrowRecord:
         connection.commit()
         connection.close()
         self.return_date = return_date
-        self.status - 'Returned'
+        self.status = 'Returned'
         Equipment().get_by_id(self.item_id).update_availability("return", self.qty_borrowed)
         return True, "Returned"
 
     def get_active_for_item(self, item_id):
         connection = get_connection()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM borrow_records WHERE item_id=? AND status= 'Borrowed'", (item_id))
+        cursor.execute("SELECT * FROM borrow_records WHERE item_id=? AND status= 'Borrowed'", (item_id,))
         rows = cursor.fetchall()
         connection.close()
 
