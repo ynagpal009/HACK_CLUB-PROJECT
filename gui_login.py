@@ -42,14 +42,14 @@ class LoginWindow:
     def build_ui(self):
         header_frame = tk.Frame(self.window, bg=Dark_Blue, pady=25)
         header_frame.pack(fill="x")
-        tk.Label(header_frame, text="Random School", bg=Dark_Blue, fg=White, font=("Calibri", 13, "bold")).pack()
-        tk.Label(header_frame, text="HPE Equipment Inventory", bg=Dark_Blue, fg=Light_Blue, font=("Calibri", 13, "bold")).pack()
+        tk.Label(header_frame, text="Random School", bg=Dark_Blue, fg=White, font=("Calibri", 16, "bold")).pack()
+        tk.Label(header_frame, text="HPE Equipment Inventory", bg=Dark_Blue, fg=Light_Blue, font=("Calibri", 16, "bold")).pack()
 
         # The Card Container
         card = tk.Frame(self.window, bg=Card_Grey, padx=40, pady=30, bd=1, relief="solid")
         card.pack(expand=True, pady=20)
 
-        tk.Label(card, text="Sign In", bg=Card_Grey, fg=Dark_Blue, font=("Calibri", 16, "bold")).pack(anchor="center", pady=(0, 15))
+        tk.Label(card, text="Sign In", bg=Card_Grey, fg=Dark_Blue, font=("Calibri", 18, "bold")).pack(anchor="center", pady=(0, 15))
 
         tk.Label(card, text="Username", bg=Card_Grey, font=("Calibri", 11, "bold")).pack(anchor="w")
         self.username_input = tk.StringVar()

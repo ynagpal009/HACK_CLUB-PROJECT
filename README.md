@@ -1,10 +1,10 @@
-# Sports Equipment Inventory Management System - MVP Build
+# Sports Equipment Inventory Management System 
 
 This is a local Python desktop application powered by Tkinter and SQLite.
 
 
 # Live Video Demonstration - Click link to watch
-
+https://www.loom.com/share/93d14d866dc3481881412c9b31a97726
 
 # How to download and Run it locally
 If you want to boot it up and try out the app on your own computer, just copy and paste these commands into your terminal start from #1:

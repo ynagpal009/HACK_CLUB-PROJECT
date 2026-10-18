@@ -312,7 +312,7 @@ class Equipment:
         # numbers used by the report screen
         items = self.get_all()
 
-        categories = []
+        categories = {}
         low_stock_items = []
         total_qty = 0
         total_available = 0
@@ -321,7 +321,7 @@ class Equipment:
             if item.category in categories:
                 categories[item.category] += 1
             else:
-                categories[item.categoty] = 1 
+                categories[item.category] = 1 
 
             total_qty += item.total_qty
             total_available += item.available_qty

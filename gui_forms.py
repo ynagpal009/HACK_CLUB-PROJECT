@@ -504,8 +504,82 @@ class BorrowLogWindow:
         self.count_var.set(f"{len(records)} record(s)")
 
 
+class ReportWindow:
+    # admin only - shows the numbers Mr Ellis wanted (totals, low stock,
+    # categories) and lets him export the full list as CSV
 
+    def __init__(self, parent):
+        summary = Equipment().get_summary()
 
+        self.win = tk.Toplevel(parent)
+        self.win.title("Inventory Summary Report")
+        self.win.geometry("560x520")
+        self.win.configure(bg=White)
 
+        tk.Label(self.win, text="Inventory Summary Report", bg=Dark_Blue, fg=White, font=("Calibri", 14, "bold"), anchor="w", padx=20, pady=10).pack(fill="x")
 
-class ReportWindow: pass 
+        body = tk.Frame(self.win, bg=White, padx=25, pady=15)
+        body.pack(fill="both", expand=True)
+
+        stats = [
+            ("Total distinct items:", summary["total_items"]),
+            ("Total units held:", summary["total_qty"]),
+            ("Units currently available:", summary["total_available"]),
+            ("Units currently borrowed:", summary["total_borrowed"]),
+            ("Items below low-stock threshold:", len(summary["low_stock_items"])),
+        ]
+        row_number = 0 
+        for label, value in stats:
+            tk.Label(body, text=label, bg=White, font=("Calibri", 11)).grid(row=row_number, column=0, sticky="w", pady=4)
+            tk.Label(body, text=str(value), bg=White, font=("Calibri", 11, "bold"), fg=Dark_Blue).grid(row=row_number, column=1, sticky="w", padx=10)
+            row_number += 1
+
+        tk.Label(body, text="By Category:", bg=White, font=("Calibri", 11, "bold")).grid(row=row_number, column=0, sticky="w", pady=(15, 4))
+        row_number += 1
+
+        cat_text = ""
+        for cat, count in summary["categories"].items():
+            if cat_text != "":
+                cat_text += ", "
+            cat_text += f"{cat} ({count})"
+        if cat_text == "":
+            cat_text = "No items recorded."
+        tk.Label(body, text=cat_text, bg=White, font=("Calibri", 10), wraplength=480, justify="left").grid(row=row_number, column=0, columnspan=2, sticky="w")
+        row_number += 1
+
+        tk.Label(body, text="Low-Stock Items:", bg=White, font=("Calibri", 11, "bold")).grid(row=row_number, column=0, sticky="w", pady=(15, 4))
+        row_number += 1
+
+        low_frame = tk.Frame(body, bg=White)
+        low_frame.grid(row=row_number, column=0, columnspan=2, sticky="ew")
+        low_tree = ttk.Treeview(low_frame, columns=("name", "avail", "thresh"), show="headings", height=6)
+        low_tree.heading("name", text="Item Name")
+        low_tree.column("name", width=250)
+        low_tree.heading("avail", text="Available")
+        low_tree.column("avail", width=90, anchor="center")
+        low_tree.heading("thresh", text="Threshold")
+        low_tree.column("thresh", width=90, anchor="center")
+        low_tree.pack(fill="x")
+        for item in summary["low_stock_items"]:
+            low_tree.insert("", "end", values=(item.item_name, item.available_qty, item.low_stock_threshold))
+
+        btn_box = tk.Frame(self.win, bg=White, pady=15)
+        btn_box.pack()
+        Flatbutton(btn_box, "Export Full CSV", Green, White, self.export_csv).pack(side="left", padx=5)
+        Flatbutton(btn_box, "Close", Grey, "#000000", self.win.destroy).pack(side="left", padx=5)
+
+    def export_csv(self):
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV file", "*.csv")],
+            initialfile="inventory_report.csv",
+            title="Save Inventory Report As"
+        )
+        if not path:
+            return
+        with open(path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["ID", "Name", "Category", "Total", "Available", "Location", "Condition", "Low Stock Threshold"])
+            for i in Equipment().get_all():
+                writer.writerow([i.item_id, i.item_name, i.category, i.total_qty, i.available_qty, i.location, i.condition_status, i.low_stock_threshold])
+        messagebox.showinfo("Success", f"Data exported to {path}")
