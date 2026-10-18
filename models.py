@@ -77,7 +77,7 @@ class User:
         if is_new:
             password_hash = hash_password(new_password)
             cursor.execute("""
-                Insert INTO users (username, password_hash, role, full_name, is_active, data_created)
+                Insert INTO users (username, password_hash, role, full_name, is_active, date_created)
                 Values (?, ?, ?, ?, ?, ?)
             """, (self.username, password_hash, self.role, self.full_name, self.is_active, str(date.today())))
             self.user_id = cursor.lastrowid

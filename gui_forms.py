@@ -288,13 +288,13 @@ class UserForm:
         ttk.Entry(panel, textvariable=self.fullname_var, width=30).grid(row=1, column=1, sticky="w")
 
         tk.Label(panel, text="Role *", bg=White, font=("Calibri", 10, "bold")).grid(row=2, column=0, sticky="w", pady=10)
-        tk.Combobox(panel, textvariable=self.role_var, values=["Admin", "Staff"], state="readonly", width=15).grid(row=2, column=1, sticky="w")
+        ttk.Combobox(panel, textvariable=self.role_var, values=["Admin", "Staff"], state="readonly", width=15).grid(row=2, column=1, sticky="w")
 
         if self.is_new:
             pw_label = "Password *"
         else:
             pw_label = "New Password (leave blank to keep current)"
-        tk.Label(panel, tex=pw_label, bg=White, font=("Calibri", 10, "bold")).grid(row=3, column=0, sticky="w", pady=10)
+        tk.Label(panel, text=pw_label, bg=White, font=("Calibri", 10, "bold")).grid(row=3, column=0, sticky="w", pady=10)
         ttk.Entry(panel, textvariable=self.password_var, show="\u2022", width=30).grid(row=3, column=1, sticky="w")
 
         tk.Checkbutton(panel, text="Account Active", variable=self.active_var, bg=White, font=("Calibri", 10)).grid(row=4, column=0, columnspan=2, sticky="w", pady=10)
@@ -328,6 +328,184 @@ class UserForm:
             self.error_var.set(msg)
 
 
-class AccountsWindow: pass
-class ReportWindow: pass
-class BorrowLogWindow: pass
+class AccountsWindow:
+    # admin only screen - shows all logins and lets you add new ones,
+    # edit them, or turn them on/off
+
+    def __init__(self, parent, current_user):
+        self.current_user = current_user
+        self.win = tk.Toplevel(parent)
+        self.win.title("Manage User Accounts")
+        self.win.geometry("640x460")
+        self.win.configure(bg=White)
+        self.win.grab_set()
+
+        tk.Label(self.win, text="User Accounts", bg=Dark_Blue, fg=White, font=("Calibri", 14, "bold"), anchor="w", padx=20, pady=10).pack(fill="x")
+
+        toolbar = tk.Frame(self.win, bg=Grey, pady=8, padx=10)
+        toolbar.pack(fill="x")
+        Flatbutton(toolbar, "+ Add User", "#2E75B6", White, self.add_user, width=10).pack(side="left", padx=5)
+        Flatbutton(toolbar, "Edit User", "#E67E22", White, self.edit_user, width=10).pack(side="left", padx=5)
+        Flatbutton(toolbar, "Toggle Active", Dark_Blue, White, self.toggle_active, width=12).pack(side="left", padx=5)
+
+        table_frame = tk.Frame(self.win, bg=White)
+        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.tree = ttk.Treeview(table_frame, columns=("id", "username", "name", "role", "status"), show="headings")
+        self.tree.heading("id", text="id")
+        self.tree.column("id", width=40, anchor="center")
+        self.tree.heading("username", text="Username")
+        self.tree.column("username", width=130, anchor="w")
+        self.tree.heading("name", text="Full Name")
+        self.tree.column("name", width=180, anchor="w")
+        self.tree.heading("role", text="Role")
+        self.tree.column("role", width=80, anchor="center")
+        self.tree.heading("status", text="Status")
+        self.tree.column("status", width=90, anchor="center")
+        self.tree.pack(fill="both", expand=True)
+
+        self.refresh()
+
+    def refresh(self):
+        for r in self.tree.get_children():
+            self.tree.delete(r)
+        for user in User().get_all():
+            if user.is_active:
+                status = "Active"
+            else:
+                status = "Deactivated"
+            self.tree.insert("", "end", iid=user.user_id, values=(user.user_id, user.username, user.full_name, user.role, status))
+
+    def get_selected(self):
+        sel = self.tree.focus()
+        if not sel:
+            messagebox.showwarning("Error", "Please select a user.")
+            return None
+
+        for user in User().get_all():
+            if user.user_id == int(sel):
+                return user
+        return None
+
+    def add_user(self):
+        UserForm(self.win, self.refresh)
+
+    def edit_user(self):
+        user = self.get_selected()
+        if user:
+            UserForm(self.win, self.refresh, user)
+
+    def toggle_active(self):
+        user = self.get_selected()
+        if not user:
+            return
+        if user.user_id == self.current_user.user_id:
+            messagebox.showerror("Error", "You cannot deactivate your own account while logged in.")
+            return
+        user.set_active(not user.is_active)
+        self.refresh()
+    
+            
+class BorrowLogWindow: 
+    # shows everything currently on loan, or the full history if you
+    # switch the radio button. 
+
+
+    def __init__(self, parent):
+        self.win = tk.Toplevel(parent)
+        self.win.title("Borrowing Log")
+        self.win.geometry("760x480")
+        self.win.configure(bg=White)
+
+        tk.Label(self.win, text="Borrowing Log", bg=Dark_Blue, fg=White, font=("Calibri", 14, "bold"), anchor="w", padx=20, pady=10).pack(fill="x")
+
+        toolbar = tk.Frame(self.win, bg=BG_Blue, pady=8, padx=10)
+        toolbar.pack(fill="x")
+
+        self.mode_var = tk.StringVar(value="active")
+        tk.Radiobutton(toolbar, text="Currently Borrowed", variable=self.mode_var, value="active",
+                       bg=BG_Blue, font=("Calibri", 10), command=self.refresh).pack(side="left", padx=5)
+        tk.Radiobutton(toolbar, text="Full History", variable=self.mode_var, value="history",
+                       bg=BG_Blue, font=("Calibri", 10), command=self.refresh).pack(side="left", padx=5)
+        
+        self.search_var = tk.StringVar()
+        search_entry = tk.Entry(toolbar, textvariable=self.search_var, width=25, font=("Calibri", 10))
+        search_entry.pack(side="right", padx=5)
+        search_entry.bind("<Return>", self.handle_search_enter)
+        Flatbutton(toolbar, "Search", White, "#000000", self.refresh, width=8).pack(side="right")
+        tk.Label(toolbar, text="Search borrower/item:", bg=BG_Blue, font=("Calibri", 10)).pack(side="right", padx=(10, 0))
+
+        table_frame = tk.Frame(self.win, bg=White)
+        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.tree = ttk.Treeview(table_frame, columns=("item", "borrower", "qty", "borrowed", "due", "returned", "status"), show="headings")
+        self.tree.heading("item", text="Item")
+        self.tree.column("item", width=170, anchor="w")
+        self.tree.heading("borrower", text="Borrower")
+        self.tree.column("borrower", width=140, anchor="w")
+        self.tree.heading("qty", text="Qty")
+        self.tree.column("qty", width=50, anchor="center")
+        self.tree.heading("borrowed", text="Borrowed On")
+        self.tree.column("borrowed", width=100, anchor="center")
+        self.tree.heading("due", text="Due Back")
+        self.tree.column("due", width=100, anchor="center")
+        self.tree.heading("returned", text="Returned On")
+        self.tree.column("returned", width=100, anchor="center")
+        self.tree.heading("status", text="Status")
+        self.tree.column("status", width=90, anchor="center")
+        self.tree.pack(fill="both", expand=True)
+
+        self.count_var = tk.StringVar()
+        tk.Label(self.win, textvariable=self.count_var, bg="#F2F2F2", anchor="w", padx=10, pady=5).pack(fill="x", side="bottom")
+
+        self.refresh()
+
+    def handle_search_enter(self, event):
+        self.refresh()
+
+    def refresh(self):
+        for r in self.tree.get_children():
+            self.tree.delete(r)
+
+        if self.mode_var.get() == "active":
+            all_active = BorrowRecord().get_all_active()
+            # If searching while in "active" mode, filter by borrower or
+            # item name for a consistent search experience.
+            text = self.search_var.get().strip().lower()
+            records = []
+            for r in all_active:
+                if text == "" or text in r.borrower_name.lower() or text in r.item_name.lower():
+                    records.append(r)
+        else:
+            records = BorrowRecord().get_history(self.search_var.get())
+
+        today_text = str(date.today())
+        for rec in records:
+            is_overdue = rec.status == "Borrowed" and rec.expected_return and rec.expected_return < today_text
+            if is_overdue:
+                row_tags = ("overdue",)
+            else:
+                row_tags = ()
+
+            if rec.expected_return:
+                due_text = rec.expected_return
+            else:
+                due_text = "-"
+
+            if rec.return_date:
+                returned_text = rec.return_date
+            else:
+                returned_text = "-"
+
+            self.tree.insert("", "end", values=(
+                rec.item_name, rec.borrower_name, rec.qty_borrowed,
+                rec.borrow_date, due_text, returned_text, rec.status
+            ), tags=row_tags)
+
+        self.tree.tag_configure("overdue", background="#FDECEA")
+        self.count_var.set(f"{len(records)} record(s)")
+
+
+
+
+
+
+class ReportWindow: pass 
