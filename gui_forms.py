@@ -121,7 +121,7 @@ class EquipmentForm:
         self.item.condition_status = self.cond_var.get()
         self.item.location = self.loc_var.get()
         self.item.total_qty = self.qty_var.get()
-        self.item.low_stock_threshod = self.thresh_var.get()
+        self.item.low_stock_threshold = self.thresh_var.get()
         self.item.notes = self.notes_var.get()
 
         ok, msg = self.item.save()

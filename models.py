@@ -214,7 +214,7 @@ class Equipment:
             # by the same amount so it doesn't get out of sync with total
             cursor.execute("SELECT total_qty , available_qty FROM equipment WHERE item_id=?", (self.item_id,))
             existing = cursor.fetchone()
-            borrowed_out = existing["total qty"] - existing["available_qty"]
+            borrowed_out = existing["total_qty"] - existing["available_qty"]
             new_available = self.total_qty - borrowed_out
             if new_available < 0:
                 new_available = 0
@@ -223,7 +223,7 @@ class Equipment:
                 UPDATE equipment SET item_name=?, category=?, total_qty=?, available_qty=?, location=?,
                 condition_status=?, low_stock_threshold=?, notes=? WHERE item_id=?
             """, (self.item_name, self.category, self.total_qty, new_available, self.location,
-                  self.condtion_status, self.low_stock_threshold, self.notes, self.item_id))
+                  self.condition_status, self.low_stock_threshold, self.notes, self.item_id))
             self.available_qty = new_available
         else:
             self.available_qty = self.total_qty
@@ -232,9 +232,9 @@ class Equipment:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (self.item_name, self.category, self.total_qty, self.available_qty, self.location, self.condition_status, self.low_stock_threshold, self.notes, self.date_added))
             self.item_id = cursor.lastrowid
-            connection.commit()
-            connection.close()
-            return True, "Saved"
+        connection.commit()
+        connection.close()
+        return True, "Saved"
 
     def delete(self):
         connection = get_connection()
