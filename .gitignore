@@ -1,1 +1,3 @@
 .DS_Store\nIcon\r\n*.db
+__pycache__/
+
