@@ -1,7 +1,17 @@
 # Sports Equipment Inventory Management System 
 
-This is a local Python desktop application powered by Tkinter and SQLite.
+A local Python desktop app built with Tkinter and SQLite to help schools or clubs track gear, manage stock, 
+and see who is borrowing equipment without messy spreadsheets.
 
+# How I Built It
+Built with **Python 3**:
+* UI: Tkinter and TTK with custom styles for a cleaner look.
+* Database: SQLite3 for real-time inventory and log tracking.
+* Reporting: Uses Python's csv module to export data summaries.
+
+# Default Login
+* Username: admin   
+* Password: admin123
 
 # Live Video Demonstration - Click link to watch
 https://www.loom.com/share/93d14d866dc3481881412c9b31a97726
